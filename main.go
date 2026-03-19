@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"sport-hub-payment/internal/database"
 	"sport-hub-payment/internal/handler"
 	"sport-hub-payment/internal/pkg/kbank"
@@ -44,6 +45,11 @@ func main() {
 	// Setup Routes
 	handler.SetupRoutes(e, paymentHandler)
 
-	// Start server
-	e.Logger.Fatal(e.Start(":1323"))
+	// Start Server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	e.Logger.Fatal(e.Start(":" + port))
 }
