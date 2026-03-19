@@ -1,0 +1,12 @@
+---
+app:
+  name: "processor-ekyc-accumulate-per-account"
+
+kbankPayment:
+  consumerKey: "LkECrBFa1GyhayrCd7HajA1u1iAVnBPo"
+  consumerSecret: "xgzjvXFVQ2vObII0"
+  partnerId: "PTR1051673"
+  partnerSecret: "d4bded59200547bc85903574a293831b"
+  merchantId: "KB102057149704"
+  terminalId: "term1"
+  baseUrl: "https://openapi-sandbox.kasikornbank.com"
