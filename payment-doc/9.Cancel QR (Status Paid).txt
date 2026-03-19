@@ -1,0 +1,34 @@
+===================================
+Cancel QR (Status Paid) 
+===================================
+
+สามารถเรียก API ผ่าน server ของคณุเอง หรือผ่านโปรแกรมอื่นๆ เช่น Postman
+URL: https://openapi-sandbox.kasikornbank.com/v1/qrpayment/cancel
+*กรุณาเพิ่ม Header "x-test-mode" : "true"
+*กรุณาเพิ่ม Header "env-id" : "QR010"
+
+---Header---
+{
+  "Authorization": "Bearer YSKDLHY7y2RT7ISF5hiAeOnAYey7",
+  "Content-Type": "application/json",
+  "x-test-mode": "true"
+}
+
+---Body---
+{
+  "partnerTxnUid": "PARTNERTEST0007",
+  "partnerId": "PTR1051673",
+  "partnerSecret": "d4bded59200547bc85903574a293831b",
+  "requestDt": "2026-03-19T13:27:00+00:00",
+  "merchantId": "KB102057149704",
+  "origPartnerTxnUid": "PARTNERTEST0007"
+}
+
+---Response---
+{
+  "partnerTxnUid": "PARTNERTEST0007",
+  "partnerId": "PTR1051673",
+  "statusCode": "10",
+  "errorCode": "qr_paid",
+  "errorDesc": "QR already paid. (EMQRP)"
+}

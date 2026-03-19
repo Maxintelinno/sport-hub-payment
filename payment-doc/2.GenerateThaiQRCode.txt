@@ -1,0 +1,32 @@
+
+===================================
+Generate Thai QR Code
+===================================
+สามารถเรียก API ผ่าน server ของคณุเอง หรือผ่านโปรแกรมอื่นๆ เช่น Postman 
+URL: https://openapi-sandbox.kasikornbank.com/v1/qrpayment/request
+*กรุณาเพิ่ม Header "x-test-mode" : "true"
+*กรุณาเพิ่ม Header "env-id" : "QR002"
+
+---Header---
+{
+  "Authorization": "Bearer aSNluG4J50awAEwmtCY6WHl9G8QV",
+  "Content-Type": "application/json",
+  "x-test-mode": "true"
+}
+
+---Body---
+{ "partnerTxnUid":"PARTNERTEST0001", "partnerId": "PTR1051673", "partnerSecret": "d4bded59200547bc85903574a293831b", "requestDt":"2026-03-18T23:58:00+00:00", "merchantId": "KB102057149704", "terminalId":"term1", "qrType":"3", "txnAmount":"100.50", "txnCurrencyCode":"THB", "reference1":"INV001", "reference2":"HELLOWORLD", "reference3":"INV001", "reference4":"INV001", "metadata":"test QR" }
+
+---Response---
+{
+  "partnerTxnUid": "PARTNERTEST0001",
+  "partnerId": "PTR1051673",
+  "statusCode": "00",
+  "errorCode": "",
+  "errorDesc": "",
+  "accountName": "Kasikorn API",
+  "qrCode": "00020101021230810016A00000067701011201150107536000315080214KB1020571497040320API1582994752120378531690016A00000067701011301030040214KB1020571497040420API1582994752120378553037645406100.505802TH63047e1a",
+  "sof": [
+    "PP"
+  ]
+}

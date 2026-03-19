@@ -1,0 +1,32 @@
+===================================
+OAuth 2.0
+===================================
+
+สามารถเรียก API ผ่าน server ของคุณเอง หรือผ่านโปรแกรมอื่นๆ เช่น Postman
+URL: https://openapi-sandbox.kasikornbank.com/v2/oauth/token
+*กรุณาเพิ่ม Header "x-test-mode" : "true"
+*กรุณาเพิ่ม Header "env-id" : "OAUTH2"
+
+---Header---
+{
+  "Authorization": "Basic TGtFQ3JCRmExR3loYXlyQ2Q3SGFqQTF1MWlBVm5CUG86eGd6anZYRlZRMnZPYklJMA==",
+  "Content-Type": "application/x-www-form-urlencoded",
+  "env-id": "OAUTH2",
+  "x-test-mode": "true"
+}
+
+---Body---
+{
+  "grant_type": "client_credentials"
+}
+
+---Response---
+{
+  "access_token": "aSNluG4J50awAEwmtCY6WHl9G8QV",
+  "client_id": "LkECrBFa1GyhayrCd7HajA1u1iAVnBPo",
+  "developer.email": "thakrit.ratchakote@gmail.com",
+  "expires_in": "1799",
+  "scope": "",
+  "status": "approved",
+  "token_type": "Bearer"
+}

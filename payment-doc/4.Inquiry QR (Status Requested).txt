@@ -1,0 +1,46 @@
+===================================
+Inquiry QR (Status Requested)
+===================================
+
+สามารถเรียก API ผ่าน server ของคณุเอง หรือผ่านโปรแกรมอื่นๆ เช่น Postman
+URL: https://openapi-sandbox.kasikornbank.com/v1/qrpayment/v4/inquiry
+*กรุณาเพิ่ม Header "x-test-mode" : "true"
+*กรุณาเพิ่ม Header "env-id" : "QR004"
+
+---Header---
+{
+  "Authorization": "Bearer aSNluG4J50awAEwmtCY6WHl9G8QV",
+  "Content-Type": "application/json",
+  "x-test-mode": "true"
+}
+
+---Body---
+{
+  "partnerTxnUid": "PARTNERTEST0002",
+  "partnerId": "PTR1051673",
+  "partnerSecret": "d4bded59200547bc85903574a293831b",
+  "requestDt": "2026-03-19T00:09:00+00:00",
+  "merchantId": "KB102057149704",
+  "origPartnerTxnUid": "PARTNERTEST0001"
+}
+
+---Response---
+ {
+  "partnerTxnUid": "PARTNERTEST0002",
+  "partnerId": "PTR1051673",
+  "statusCode": "00",
+  "errorCode": null,
+  "errorDesc": null,
+  "txnStatus": "REQUESTED",
+  "txnNo": null,
+  "loyaltyId": null,
+  "merchantId": "KB000001588975",
+  "terminalId": "09000107",
+  "qrType": "3",
+  "txnAmount": "120.00",
+  "txnCurrencyCode": "THB",
+  "reference1": "INV001",
+  "reference2": "null",
+  "reference3": "null",
+  "reference4": "null"
+}
