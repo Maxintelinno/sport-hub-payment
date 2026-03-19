@@ -119,10 +119,10 @@ func (c *Client) GenerateThaiQR(amount string, reference1, reference2 string) (*
 		QrType:          "3",
 		TxnAmount:       amount,
 		TxnCurrencyCode: "THB",
-		Reference1:      reference1,
-		Reference2:      reference2,
-		Reference3:      reference1,
-		Reference4:      reference1,
+		Reference1:      "INV001",
+		Reference2:      "HELLOWORLD",
+		Reference3:      "INV001",
+		Reference4:      "INV001",
 		Metadata:        "test QR",
 	}
 
