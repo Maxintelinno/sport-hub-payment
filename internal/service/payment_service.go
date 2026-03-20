@@ -43,7 +43,7 @@ func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, 
 	}
 
 	// 2. Generate QR Code from KBank
-	resp, err := s.kbankClient.GenerateThaiQR(requestUserID,bookingID,amount, ref1, ref2)
+	resp, err := s.kbankClient.GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2)
 	if err != nil {
 		return nil, err
 	}

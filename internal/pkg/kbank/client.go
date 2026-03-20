@@ -110,7 +110,7 @@ func (c *Client) GenerateThaiQR(requestUserID, bookingID, amount string, referen
 	//txnUid := fmt.Sprintf("PARTNERTEST%04d", time.Now().Unix()%10000)
 
 	qrReq := QRRequest{
-		PartnerTxnUid:   requestUserID + "SPORTHUB",
+		PartnerTxnUid:   "PARTNERTEST0001",
 		PartnerId:       c.PartnerId,
 		PartnerSecret:   c.PartnerSecret,
 		RequestDt:       time.Now().Format("2006-01-02T15:04:05-07:00"),
