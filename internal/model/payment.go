@@ -11,3 +11,14 @@ type QRResponse struct {
 	QrCode string `json:"qrCode"`
 	Status string `json:"status"`
 }
+
+type KBankWebhookRequest struct {
+	EventType       string `json:"eventType"`
+	EventID         string `json:"eventId"`
+	Status          string `json:"status"`
+	PartnerTxnUid   string `json:"partnerTxnUid"`
+	TransactionID   string `json:"transactionId"`
+	Amount          string `json:"amount"`
+	Currency        string `json:"currency"`
+	PaymentDateTime string `json:"paymentDateTime"`
+}

@@ -10,7 +10,9 @@ func SetupRoutes(e *echo.Echo, ph *PaymentHandler) {
 	
 	v1 := e.Group("/v1")
 	v1.Use(middleware.Auth)
-	
+
+	v1.POST("/payments/webhooks/kbank", ph.HandleKBankWebhook)
+
 	payment := v1.Group("/payment")
 	{
 		payment.POST("/qr/generate", ph.GenerateThaiQR)

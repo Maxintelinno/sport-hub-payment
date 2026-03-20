@@ -33,7 +33,8 @@ func main() {
 	// Initialize Repository, Service and Handler
 	paymentRepo := repository.NewPaymentRepository(db)
 	paymentService := service.NewPaymentService(kbankClient, paymentRepo)
-	paymentHandler := handler.NewPaymentHandler(paymentService)
+	webhookService := service.NewWebhookService(paymentRepo)
+	paymentHandler := handler.NewPaymentHandler(paymentService, webhookService)
 
 	// Echo instance
 	e := echo.New()
