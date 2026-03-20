@@ -84,7 +84,13 @@ func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, 
 }
 
 func (s *paymentService) GetPaymentStatus(paymentID, userID string) (*repository.Payment, error) {
-	// 1. Verify Ownership
+	// 1. Get Payment first to see if it exists
+	payment, err := s.repo.GetPaymentByID(paymentID)
+	if err != nil {
+		return nil, fmt.Errorf("payment not found: %w", err)
+	}
+
+	// 2. Verify Ownership
 	isOwner, err := s.repo.VerifyPaymentOwner(paymentID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify payment owner: %w", err)
@@ -92,12 +98,6 @@ func (s *paymentService) GetPaymentStatus(paymentID, userID string) (*repository
 
 	if !isOwner {
 		return nil, fmt.Errorf("unauthorized: user %s does not own payment %s", userID, paymentID)
-	}
-
-	// 2. Get Payment
-	payment, err := s.repo.GetPaymentByID(paymentID)
-	if err != nil {
-		return nil, fmt.Errorf("payment not found: %w", err)
 	}
 
 	return payment, nil

@@ -187,9 +187,9 @@ func (r *gormPaymentRepository) GetPaymentByID(id string) (*Payment, error) {
 
 func (r *gormPaymentRepository) VerifyPaymentOwner(paymentID, userID string) (bool, error) {
 	var count int64
-	err := r.db.Table("payments").
-		Joins("JOIN bookings ON bookings.id = payments.booking_id").
-		Where("payments.id = ? AND bookings.user_id = ?", paymentID, userID).
+	// Using a subquery to avoid potential JOIN naming issues with pluralization
+	err := r.db.Model(&Payment{}).
+		Where("id = ? AND booking_id IN (?)", paymentID, r.db.Table("bookings").Select("id").Where("user_id = ?", userID)).
 		Count(&count).Error
 	
 	return count > 0, err
