@@ -100,7 +100,7 @@ func (c *Client) GetAccessToken() (string, error) {
 	return tokenResp.AccessToken, nil
 }
 
-func (c *Client) GenerateThaiQR(requestUserID, amount string, reference1, reference2 string) (*QRResponse, error) {
+func (c *Client) GenerateThaiQR(requestUserID, bookingID, amount string, reference1, reference2 string) (*QRResponse, error) {
 	token, err := c.GetAccessToken()
 	if err != nil {
 		return nil, err
