@@ -49,7 +49,7 @@ func (s *webhookService) HandleKBankWebhook(headers map[string]string, body []by
 		return s.markLogFailed(webhookLog.ID, fmt.Sprintf("idempotency check failed: %v", err))
 	}
 	if isProcessed {
-		return s.markLogSuccess(webhookLog.ID, "event already processed")
+		return fmt.Errorf("event already processed (eventId: %s)", req.EventID)
 	}
 
 	// 5. Look up Payment by partnerTxnUid (reference)
@@ -77,7 +77,7 @@ func (s *webhookService) HandleKBankWebhook(headers map[string]string, body []by
 			return s.markLogFailed(webhookLog.ID, fmt.Sprintf("failed to process success event: %v", err))
 		}
 	} else {
-		return s.markLogSuccess(webhookLog.ID, fmt.Sprintf("ignored status: %s", req.Status))
+		return fmt.Errorf("ignored status: %s (only SUCCESS is processed)", req.Status)
 	}
 
 	return nil

@@ -9,12 +9,16 @@ func SetupRoutes(e *echo.Echo, ph *PaymentHandler) {
 	e.GET("/", ph.Hello)
 	
 	v1 := e.Group("/v1")
-	v1.Use(middleware.Auth)
-
+	
+	// Public Webhook (No Auth)
 	v1.POST("/payments/webhooks/kbank", ph.HandleKBankWebhook)
-	v1.GET("/payments/:id", ph.GetPaymentStatus)
 
-	payment := v1.Group("/payment")
+	// Protected routes
+	v1Auth := v1.Group("")
+	v1Auth.Use(middleware.Auth)
+	v1Auth.GET("/payments/:id", ph.GetPaymentStatus)
+
+	payment := v1Auth.Group("/payment")
 	{
 		payment.POST("/qr/generate", ph.GenerateThaiQR)
 
