@@ -8,8 +8,9 @@ type GenerateQRRequest struct {
 }
 
 type QRResponse struct {
-	QrCode string `json:"qrCode"`
-	Status string `json:"status"`
+	PaymentID string `json:"paymentId"`
+	QrCode    string `json:"qrCode"`
+	Status    string `json:"status"`
 }
 
 type KBankWebhookRequest struct {

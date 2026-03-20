@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"sport-hub-payment/internal/model"
 	"sport-hub-payment/internal/pkg/kbank"
 	"sport-hub-payment/internal/repository"
 	"strconv"
@@ -10,7 +11,7 @@ import (
 )
 
 type PaymentService interface {
-	GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*kbank.QRResponse, error)
+	GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*model.QRResponse, error)
 	GetPaymentStatus(paymentID, userID string) (*repository.Payment, error)
 }
 
@@ -26,7 +27,7 @@ func NewPaymentService(client *kbank.Client, repo repository.PaymentRepository) 
 	}
 }
 
-func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*kbank.QRResponse, error) {
+func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*model.QRResponse, error) {
 	// 1. Validate Ownership: Check if the requestUserID matches the booking owner
 	bookingOwner, err := s.repo.GetBookingOwner(bookingID)
 	if err != nil {
@@ -80,7 +81,11 @@ func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, 
 		return nil, fmt.Errorf("failed to save payment and update booking: %w", err)
 	}
 
-	return resp, nil
+	return &model.QRResponse{
+		PaymentID: payment.ID,
+		QrCode:    resp.QrCode,
+		Status:    "pending", // Initial status
+	}, nil
 }
 
 func (s *paymentService) GetPaymentStatus(paymentID, userID string) (*repository.Payment, error) {
