@@ -12,6 +12,7 @@ func SetupRoutes(e *echo.Echo, ph *PaymentHandler) {
 	v1.Use(middleware.Auth)
 
 	v1.POST("/payments/webhooks/kbank", ph.HandleKBankWebhook)
+	v1.GET("/payments/:id", ph.GetPaymentStatus)
 
 	payment := v1.Group("/payment")
 	{

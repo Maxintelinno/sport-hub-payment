@@ -11,6 +11,7 @@ import (
 
 type PaymentService interface {
 	GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*kbank.QRResponse, error)
+	GetPaymentStatus(paymentID, userID string) (*repository.Payment, error)
 }
 
 type paymentService struct {
@@ -80,4 +81,24 @@ func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, 
 	}
 
 	return resp, nil
+}
+
+func (s *paymentService) GetPaymentStatus(paymentID, userID string) (*repository.Payment, error) {
+	// 1. Verify Ownership
+	isOwner, err := s.repo.VerifyPaymentOwner(paymentID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify payment owner: %w", err)
+	}
+
+	if !isOwner {
+		return nil, fmt.Errorf("unauthorized: user %s does not own payment %s", userID, paymentID)
+	}
+
+	// 2. Get Payment
+	payment, err := s.repo.GetPaymentByID(paymentID)
+	if err != nil {
+		return nil, fmt.Errorf("payment not found: %w", err)
+	}
+
+	return payment, nil
 }

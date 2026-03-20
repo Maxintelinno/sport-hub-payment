@@ -67,6 +67,10 @@ type PaymentRepository interface {
 	IsEventProcessed(provider, eventID string) (bool, error)
 	GetPaymentByProviderRef(provider, ref string) (*Payment, error)
 	ProcessKBankQRSuccess(payment *Payment, event *PaymentEvent, webhookLogID string) error
+
+	// Polling
+	GetPaymentByID(id string) (*Payment, error)
+	VerifyPaymentOwner(paymentID, userID string) (bool, error)
 }
 
 type gormPaymentRepository struct {
@@ -146,10 +150,6 @@ func (r *gormPaymentRepository) ProcessKBankQRSuccess(payment *Payment, event *P
 		payment.Status = "paid"
 		payment.PaidAt = &now
 		
-		// If event contains a specific transaction ID from provider, use it
-		// We can use the EventID or add a separate field if needed.
-		// For now, ensuring status is 'paid' as requested.
-		
 		if err := tx.Save(payment).Error; err != nil {
 			return err
 		}
@@ -174,4 +174,23 @@ func (r *gormPaymentRepository) ProcessKBankQRSuccess(payment *Payment, event *P
 
 		return nil
 	})
+}
+
+func (r *gormPaymentRepository) GetPaymentByID(id string) (*Payment, error) {
+	var payment Payment
+	err := r.db.Where("id = ?", id).First(&payment).Error
+	if err != nil {
+		return nil, err
+	}
+	return &payment, nil
+}
+
+func (r *gormPaymentRepository) VerifyPaymentOwner(paymentID, userID string) (bool, error) {
+	var count int64
+	err := r.db.Table("payments").
+		Joins("JOIN bookings ON bookings.id = payments.booking_id").
+		Where("payments.id = ? AND bookings.user_id = ?", paymentID, userID).
+		Count(&count).Error
+	
+	return count > 0, err
 }

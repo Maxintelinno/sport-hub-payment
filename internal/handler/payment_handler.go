@@ -3,6 +3,7 @@ package handler
 import (
 	"io"
 	"net/http"
+	"strings"
 	"sport-hub-payment/internal/model"
 	"sport-hub-payment/internal/service"
 
@@ -79,6 +80,26 @@ func (h *PaymentHandler) HandleKBankWebhook(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"status": "success"})
+}
+
+func (h *PaymentHandler) GetPaymentStatus(c echo.Context) error {
+	paymentID := c.Param("id")
+	userID := c.Get("user_id").(string)
+
+	payment, err := h.paymentService.GetPaymentStatus(paymentID, userID)
+	if err != nil {
+		// If it's an ownership error, return 403 or 404
+		if strings.Contains(err.Error(), "unauthorized") {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "you do not have permission to view this payment",
+			})
+		}
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "payment not found",
+		})
+	}
+
+	return c.JSON(http.StatusOK, payment)
 }
 
 func (h *PaymentHandler) Hello(c echo.Context) error {
