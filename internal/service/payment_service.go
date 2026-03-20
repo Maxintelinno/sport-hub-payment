@@ -43,16 +43,16 @@ func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, 
 	}
 
 	// 2. Generate QR Code from KBank
-	resp, err := s.kbankClient.GenerateThaiQR(amount, ref1, ref2)
+	resp, err := s.kbankClient.GenerateThaiQR(requestUserID,bookingID,amount, ref1, ref2)
 	if err != nil {
 		return nil, err
 	}
 
 	// 2. Prepare payment record for GORM
 	paymentNo := fmt.Sprintf("PAY-%d", time.Now().UnixNano()/1e6)
-	
+
 	amountF, _ := strconv.ParseFloat(amount, 64)
-	
+
 	metadata := map[string]interface{}{
 		"partnerId":   resp.PartnerId,
 		"merchantId":  s.kbankClient.MerchantId,

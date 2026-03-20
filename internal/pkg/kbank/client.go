@@ -100,7 +100,7 @@ func (c *Client) GetAccessToken() (string, error) {
 	return tokenResp.AccessToken, nil
 }
 
-func (c *Client) GenerateThaiQR(amount string, reference1, reference2 string) (*QRResponse, error) {
+func (c *Client) GenerateThaiQR(requestUserID, bookingID, amount string, reference1, reference2 string) (*QRResponse, error) {
 	token, err := c.GetAccessToken()
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func (c *Client) GenerateThaiQR(amount string, reference1, reference2 string) (*
 	//txnUid := fmt.Sprintf("PARTNERTEST%04d", time.Now().Unix()%10000)
 
 	qrReq := QRRequest{
-		PartnerTxnUid:   "PARTNERTEST0001",
+		PartnerTxnUid:   requestUserID + "SPORTHUB",
 		PartnerId:       c.PartnerId,
 		PartnerSecret:   c.PartnerSecret,
 		RequestDt:       time.Now().Format("2006-01-02T15:04:05-07:00"),
@@ -120,7 +120,7 @@ func (c *Client) GenerateThaiQR(amount string, reference1, reference2 string) (*
 		TxnAmount:       amount,
 		TxnCurrencyCode: "THB",
 		Reference1:      "INV001",
-		Reference2:      "HELLOWORLD",
+		Reference2:      bookingID,
 		Reference3:      "INV001",
 		Reference4:      "INV001",
 		Metadata:        "test QR",
