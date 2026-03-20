@@ -143,9 +143,12 @@ func (r *gormPaymentRepository) ProcessKBankQRSuccess(payment *Payment, event *P
 
 		// 2. Update Payment
 		now := time.Now()
-		payment.Status = "success"
+		payment.Status = "paid"
 		payment.PaidAt = &now
-		payment.ProviderTransactionID = &event.EventID // Or use transactionId from payload if different
+		
+		// If event contains a specific transaction ID from provider, use it
+		// We can use the EventID or add a separate field if needed.
+		// For now, ensuring status is 'paid' as requested.
 		
 		if err := tx.Save(payment).Error; err != nil {
 			return err

@@ -70,6 +70,9 @@ func (s *webhookService) HandleKBankWebhook(headers map[string]string, body []by
 			Payload:     body,
 		}
 
+		// Assign actual Provider Transaction ID from webhook
+		payment.ProviderTransactionID = &req.TransactionID
+
 		if err := s.repo.ProcessKBankQRSuccess(payment, event, webhookLog.ID); err != nil {
 			return s.markLogFailed(webhookLog.ID, fmt.Sprintf("failed to process success event: %v", err))
 		}
