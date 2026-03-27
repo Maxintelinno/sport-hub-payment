@@ -3,6 +3,7 @@ package repository
 import (
 	"encoding/json"
 	"fmt"
+	"sport-hub-payment/internal/model"
 	"time"
 
 	"gorm.io/gorm"
@@ -62,6 +63,11 @@ type PaymentRepository interface {
 	SavePaymentAndUpdateBooking(payment *Payment) error
 	GetBookingOwner(bookingID string) (string, error)
 
+	// Settlement
+	GetSettlementByBookingID(bookingID string) (*model.OwnerSettlement, error)
+	CreateSettlement(settlement *model.OwnerSettlement) error
+	GetBookingDetailsForSettlement(bookingID string) (*BookingSettlementData, error)
+
 	// Webhook & Events
 	SaveWebhookLog(log *PaymentWebhookLog) error
 	IsEventProcessed(provider, eventID string) (bool, error)
@@ -71,6 +77,14 @@ type PaymentRepository interface {
 	// Polling
 	GetPaymentByID(id string) (*Payment, error)
 	VerifyPaymentOwner(paymentID, userID string) (bool, error)
+}
+
+type BookingSettlementData struct {
+	OwnerID        string
+	GrossAmount    float64
+	PlatformFee    float64
+	DiscountAmount float64
+	BookingDate    time.Time
 }
 
 type gormPaymentRepository struct {
@@ -193,4 +207,58 @@ func (r *gormPaymentRepository) VerifyPaymentOwner(paymentID, userID string) (bo
 		Count(&count).Error
 	
 	return count > 0, err
+}
+
+func (r *gormPaymentRepository) GetSettlementByBookingID(bookingID string) (*model.OwnerSettlement, error) {
+	var settlement model.OwnerSettlement
+	err := r.db.Where("booking_id = ?", bookingID).First(&settlement).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &settlement, nil
+}
+
+func (r *gormPaymentRepository) CreateSettlement(settlement *model.OwnerSettlement) error {
+	return r.db.Create(settlement).Error
+}
+
+func (r *gormPaymentRepository) GetBookingDetailsForSettlement(bookingID string) (*BookingSettlementData, error) {
+	var result struct {
+		OwnerID        string  `gorm:"column:owner_id"`
+		GrossAmount    float64 `gorm:"column:total_price"` // Assuming total_price is gross
+		PlatformFee    float64 `gorm:"column:platform_fee"`
+		DiscountAmount float64 `gorm:"column:discount_amount"`
+		BookingDate    string  `gorm:"column:booking_date"`
+	}
+
+	// We use raw SELECT because we don't have the full model
+	err := r.db.Table("bookings").
+		Select("owner_id, total_price, platform_fee, discount_amount, booking_date").
+		Where("id = ?", bookingID).
+		Scan(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert booking_date string to time.Time
+	// Assuming booking_date is in "YYYY-MM-DD" or similar format that time.Parse can handle
+	// Or it might already be a timestamp in the DB
+	// Let's try to parse it. If it fails, we'll use Now() as fallback or handle it.
+	bDate, err := time.Parse("2006-01-02", result.BookingDate)
+	if err != nil {
+		// Try another format if needed, or just use CreatedAt if booking_date is missing
+		bDate = time.Now()
+	}
+
+	return &BookingSettlementData{
+		OwnerID:        result.OwnerID,
+		GrossAmount:    result.GrossAmount,
+		PlatformFee:    result.PlatformFee,
+		DiscountAmount: result.DiscountAmount,
+		BookingDate:    bDate,
+	}, nil
 }

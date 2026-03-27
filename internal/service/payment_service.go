@@ -105,5 +105,59 @@ func (s *paymentService) GetPaymentStatus(paymentID, userID string) (*repository
 		return nil, fmt.Errorf("unauthorized: user %s does not own payment %s", userID, paymentID)
 	}
 
+	// 3. Handle Settlement if Paid
+	if payment.Status == "paid" {
+		if err := s.ensureOwnerSettlement(payment); err != nil {
+			// Log error but don't fail the request (best-effort settlement creation)
+			// In a real prod app, you might want to retry or alert
+			fmt.Printf("Warning: failed to ensure owner settlement for payment %s: %v\n", payment.ID, err)
+		}
+	}
+
 	return payment, nil
+}
+
+func (s *paymentService) ensureOwnerSettlement(payment *repository.Payment) error {
+	// 1. Check if settlement already exists
+	existing, err := s.repo.GetSettlementByBookingID(payment.BookingID)
+	if err != nil {
+		return fmt.Errorf("failed to check existing settlement: %w", err)
+	}
+	if existing != nil {
+		return nil // Already exists
+	}
+
+	// 2. Fetch Booking Details
+	details, err := s.repo.GetBookingDetailsForSettlement(payment.BookingID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch booking details: %w", err)
+	}
+
+	if details.OwnerID == "" {
+		return fmt.Errorf("owner_id not found for booking %s", payment.BookingID)
+	}
+
+	// 3. Calculate Net Amount
+	netAmount := details.GrossAmount - details.PlatformFee - details.DiscountAmount
+
+	// 4. Calculate available_at (booking_date + 1 day)
+	availableAt := details.BookingDate.Add(24 * time.Hour)
+
+	// 5. Create Settlement
+	settlement := &model.OwnerSettlement{
+		BookingID:      payment.BookingID,
+		OwnerID:        details.OwnerID,
+		GrossAmount:    details.GrossAmount,
+		PlatformFee:    details.PlatformFee,
+		DiscountAmount: details.DiscountAmount,
+		NetAmount:      netAmount,
+		Status:         "pending",
+		AvailableAt:    &availableAt,
+	}
+
+	if err := s.repo.CreateSettlement(settlement); err != nil {
+		return fmt.Errorf("failed to create settlement: %w", err)
+	}
+
+	return nil
 }
