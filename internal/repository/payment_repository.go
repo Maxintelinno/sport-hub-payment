@@ -10,26 +10,26 @@ import (
 )
 
 type Payment struct {
-	ID                    string         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	BookingID             string         `gorm:"type:uuid;not null"`
-	PaymentNo             string         `gorm:"type:varchar(30);not null;unique"`
-	Provider              string         `gorm:"type:varchar(50);not null"`
-	Method                string         `gorm:"type:varchar(30);not null"`
-	Amount                float64        `gorm:"type:numeric(10,2);not null"`
-	Currency              string         `gorm:"type:varchar(10);not null;default:'THB'"`
-	Status                string         `gorm:"type:varchar(20);not null;default:'pending'"`
-	ProviderPaymentID     *string        `gorm:"type:varchar(100)"`
-	ProviderTransactionID *string        `gorm:"type:varchar(150)"`
-	ProviderReference     *string        `gorm:"type:varchar(150)"`
-	QRPayload             *string        `gorm:"type:text"`
-	QRImageURL            *string        `gorm:"type:text"`
-	ExpiresAt             time.Time      `gorm:"not null"`
-	PaidAt                *time.Time     
-	FailedAt              *time.Time     
-	FailureReason         *string        `gorm:"type:text"`
+	ID                    string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	BookingID             string    `gorm:"type:uuid;not null"`
+	PaymentNo             string    `gorm:"type:varchar(30);not null;unique"`
+	Provider              string    `gorm:"type:varchar(50);not null"`
+	Method                string    `gorm:"type:varchar(30);not null"`
+	Amount                float64   `gorm:"type:numeric(10,2);not null"`
+	Currency              string    `gorm:"type:varchar(10);not null;default:'THB'"`
+	Status                string    `gorm:"type:varchar(20);not null;default:'pending'"`
+	ProviderPaymentID     *string   `gorm:"type:varchar(100)"`
+	ProviderTransactionID *string   `gorm:"type:varchar(150)"`
+	ProviderReference     *string   `gorm:"type:varchar(150)"`
+	QRPayload             *string   `gorm:"type:text"`
+	QRImageURL            *string   `gorm:"type:text"`
+	ExpiresAt             time.Time `gorm:"not null"`
+	PaidAt                *time.Time
+	FailedAt              *time.Time
+	FailureReason         *string         `gorm:"type:text"`
 	Metadata              json.RawMessage `gorm:"type:jsonb"`
-	CreatedAt             time.Time      `gorm:"not null;default:now()"`
-	UpdatedAt             time.Time      `gorm:"not null;default:now()"`
+	CreatedAt             time.Time       `gorm:"not null;default:now()"`
+	UpdatedAt             time.Time       `gorm:"not null;default:now()"`
 }
 
 type PaymentWebhookLog struct {
@@ -42,8 +42,8 @@ type PaymentWebhookLog struct {
 	RequestBody    json.RawMessage `gorm:"type:jsonb;not null"`
 	ReceivedAt     time.Time       `gorm:"not null;default:now()"`
 	ProcessedAt    *time.Time
-	ProcessStatus  string          `gorm:"type:varchar(30);not null;default:'received'"`
-	ProcessError   *string         `gorm:"type:text"`
+	ProcessStatus  string  `gorm:"type:varchar(30);not null;default:'received'"`
+	ProcessError   *string `gorm:"type:text"`
 }
 
 type PaymentEvent struct {
@@ -163,7 +163,7 @@ func (r *gormPaymentRepository) ProcessKBankQRSuccess(payment *Payment, event *P
 		now := time.Now()
 		payment.Status = "paid"
 		payment.PaidAt = &now
-		
+
 		if err := tx.Save(payment).Error; err != nil {
 			return err
 		}
@@ -205,7 +205,7 @@ func (r *gormPaymentRepository) VerifyPaymentOwner(paymentID, userID string) (bo
 	err := r.db.Model(&Payment{}).
 		Where("id = ? AND booking_id IN (?)", paymentID, r.db.Table("bookings").Select("id").Where("user_id = ?", userID)).
 		Count(&count).Error
-	
+
 	return count > 0, err
 }
 
@@ -227,7 +227,7 @@ func (r *gormPaymentRepository) CreateSettlement(settlement *model.OwnerSettleme
 
 func (r *gormPaymentRepository) GetBookingDetailsForSettlement(bookingID string) (*BookingSettlementData, error) {
 	var result struct {
-		OwnerID        string  `gorm:"column:owner_id"`
+		OwnerID        string  `gorm:"column:user_id"`
 		GrossAmount    float64 `gorm:"column:total_price"` // Assuming total_price is gross
 		PlatformFee    float64 `gorm:"column:platform_fee"`
 		DiscountAmount float64 `gorm:"column:discount_amount"`
@@ -236,7 +236,7 @@ func (r *gormPaymentRepository) GetBookingDetailsForSettlement(bookingID string)
 
 	// We use raw SELECT because we don't have the full model
 	err := r.db.Table("bookings").
-		Select("owner_id, total_price, platform_fee, discount_amount, booking_date").
+		Select("user_id, total_price, platform_fee, discount_amount, booking_date").
 		Where("id = ?", bookingID).
 		Scan(&result).Error
 
