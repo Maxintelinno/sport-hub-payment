@@ -227,38 +227,29 @@ func (r *gormPaymentRepository) CreateSettlement(settlement *model.OwnerSettleme
 
 func (r *gormPaymentRepository) GetBookingDetailsForSettlement(bookingID string) (*BookingSettlementData, error) {
 	var result struct {
-		OwnerID        string  `gorm:"column:user_id"`
-		GrossAmount    float64 `gorm:"column:total_price"` // Assuming total_price is gross
-		PlatformFee    float64 `gorm:"column:platform_fee"`
-		DiscountAmount float64 `gorm:"column:discount_amount"`
-		BookingDate    string  `gorm:"column:booking_date"`
+		OwnerID        string    `gorm:"column:owner_id"`
+		GrossAmount    float64   `gorm:"column:total_amount"`
+		BookingDate    time.Time `gorm:"column:booking_date"`
 	}
 
-	// We use raw SELECT because we don't have the full model
+	// Join bookings with fields to get the owner_id
+	// And use correct column names: total_amount, booking_date
 	err := r.db.Table("bookings").
-		Select("user_id, total_price, platform_fee, discount_amount, booking_date").
-		Where("id = ?", bookingID).
+		Select("fields.owner_id, bookings.total_amount, bookings.booking_date").
+		Joins("JOIN fields ON fields.id = bookings.field_id").
+		Where("bookings.id = ?", bookingID).
 		Scan(&result).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert booking_date string to time.Time
-	// Assuming booking_date is in "YYYY-MM-DD" or similar format that time.Parse can handle
-	// Or it might already be a timestamp in the DB
-	// Let's try to parse it. If it fails, we'll use Now() as fallback or handle it.
-	bDate, err := time.Parse("2006-01-02", result.BookingDate)
-	if err != nil {
-		// Try another format if needed, or just use CreatedAt if booking_date is missing
-		bDate = time.Now()
-	}
-
+	// Calculate and Return
 	return &BookingSettlementData{
 		OwnerID:        result.OwnerID,
 		GrossAmount:    result.GrossAmount,
-		PlatformFee:    result.PlatformFee,
-		DiscountAmount: result.DiscountAmount,
-		BookingDate:    bDate,
+		PlatformFee:    0, // Default to 0 as not in bookings
+		DiscountAmount: 0, // Default to 0 as not in bookings
+		BookingDate:    result.BookingDate,
 	}, nil
 }
