@@ -32,3 +32,31 @@ URL: https://openapi-sandbox.kasikornbank.com/v1/qrpayment/void
   "errorCode": null,
   "errorDesc": null
 }
+
+
+
+DB ที่ควรมี
+เพิ่มใน bookings
+cancelled_at timestamp NULL,
+cancel_reason text NULL,
+refund_amount numeric(10,2) DEFAULT 0
+payments
+refunded_amount numeric(10,2)
+refund_status varchar(20)
+-- none / partial / full
+
+
+ถ้าจะทำ “เครดิตในระบบ” ให้ปลอดภัยขึ้น
+
+ออกแบบให้เป็นแบบนี้:
+
+ชื่อเรียก: Booking Credit หรือ เครดิตการจอง
+source มาจาก refund เท่านั้น
+ใช้ได้เฉพาะกับ booking ใหม่ในระบบ
+ไม่มี cash-out
+ไม่มี transfer
+ไม่มี top-up
+มีวันหมดอายุ เช่น 90 วัน
+แสดง T&C ชัดเจน
+
+แบบนี้ practical และเสี่ยงน้อยกว่า “wallet” มาก

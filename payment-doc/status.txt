@@ -1,0 +1,17 @@
+สถานะที่ควรมี
+bookings
+- pending_payment
+- confirmed
+- cancelled
+- completed
+payments
+- pending
+- paid
+- failed
+- refunded
+- partially_refunded
+owner_earnings / owner_settlements
+- pending
+- available
+- paid
+- reversed
