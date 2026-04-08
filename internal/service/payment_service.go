@@ -3,6 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 	"sport-hub-payment/internal/model"
 	"sport-hub-payment/internal/pkg/kbank"
 	"sport-hub-payment/internal/repository"
@@ -28,6 +30,11 @@ func NewPaymentService(client *kbank.Client, repo repository.PaymentRepository) 
 }
 
 func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*model.QRResponse, error) {
+
+	if os.Getenv("OMISE_SECRET_KEY") == "" {
+		log.Fatal("OMISE_SECRET_KEY is required")
+	}
+
 	// 1. Validate Ownership: Check if the requestUserID matches the booking owner
 	bookingOwner, err := s.repo.GetBookingOwner(bookingID)
 	if err != nil {
