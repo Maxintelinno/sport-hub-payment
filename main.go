@@ -25,9 +25,18 @@ func main() {
 
 	// Support Environment Variables
 	viper.AutomaticEnv()
-	// Replace dots with underscores (e.g., omise.secretKey -> OMISE_SECRETKEY or OMISE_SECRET_KEY if specifically mapped)
-	// We will also use strings.ToUpper if we want to be strict, but AutomaticEnv handles case-insensitivity in some environments.
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// Explicitly bind environment variables to ensure they are picked up even if config is missing
+	viper.BindEnv("omise.public_key", "OMISE_PUBLIC_KEY")
+	viper.BindEnv("omise.secret_key", "OMISE_SECRET_KEY")
+
+	// Diagnostics: Check direct os.Getenv visibility on Railway
+	if os.Getenv("OMISE_SECRET_KEY") != "" {
+		log.Printf("Debug: Direct os.Getenv(OMISE_SECRET_KEY) found: true")
+	} else {
+		log.Printf("Debug: Direct os.Getenv(OMISE_SECRET_KEY) found: false")
+	}
 
 	// Initialize Database with GORM
 	db, err := database.InitDB()

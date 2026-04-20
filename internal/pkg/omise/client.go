@@ -17,7 +17,7 @@ func NewClient() (*Client, error) {
 	secretKey := viper.GetString("omise.secret_key")
 
 	if secretKey == "" {
-		return nil, fmt.Errorf("omise.secret_key is required")
+		return nil, fmt.Errorf("omise.secret_key is empty (checked config file and environment variable OMISE_SECRET_KEY)")
 	}
 
 	client, err := omise.NewClient(publicKey, secretKey)
