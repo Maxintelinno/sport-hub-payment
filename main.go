@@ -9,6 +9,7 @@ import (
 	omisepkg "sport-hub-payment/internal/pkg/omise"
 	"sport-hub-payment/internal/repository"
 	"sport-hub-payment/internal/service"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
@@ -21,6 +22,12 @@ func main() {
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Warning: Could not read config file: %v. Using defaults or env vars.", err)
 	}
+
+	// Support Environment Variables
+	viper.AutomaticEnv()
+	// Replace dots with underscores (e.g., omise.secretKey -> OMISE_SECRETKEY or OMISE_SECRET_KEY if specifically mapped)
+	// We will also use strings.ToUpper if we want to be strict, but AutomaticEnv handles case-insensitivity in some environments.
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// Initialize Database with GORM
 	db, err := database.InitDB()
@@ -35,6 +42,15 @@ func main() {
 	omiseClient, err := omisepkg.NewClient()
 	if err != nil {
 		log.Printf("Warning: Omise client initialization failed: %v", err)
+	} else {
+		sKey := viper.GetString("omise.secretKey")
+		if sKey != "" {
+			masked := "********"
+			if len(sKey) > 4 {
+				masked = "..." + sKey[len(sKey)-4:]
+			}
+			log.Printf("Info: Omise client initialized with secret key ending in %s", masked)
+		}
 	}
 
 	// Initialize Repository, Service and Handler

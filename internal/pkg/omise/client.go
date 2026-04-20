@@ -2,10 +2,10 @@ package omisepkg
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/omise/omise-go"
 	"github.com/omise/omise-go/operations"
+	"github.com/spf13/viper"
 )
 
 type Client struct {
@@ -13,11 +13,11 @@ type Client struct {
 }
 
 func NewClient() (*Client, error) {
-	publicKey := os.Getenv("OMISE_PUBLIC_KEY")
-	secretKey := os.Getenv("OMISE_SECRET_KEY")
+	publicKey := viper.GetString("omise.publicKey")
+	secretKey := viper.GetString("omise.secretKey")
 
 	if secretKey == "" {
-		return nil, fmt.Errorf("OMISE_SECRET_KEY is required")
+		return nil, fmt.Errorf("omise.secretKey is required")
 	}
 
 	client, err := omise.NewClient(publicKey, secretKey)
