@@ -32,10 +32,21 @@ func main() {
 	viper.BindEnv("omise.secret_key", "OMISE_SECRET_KEY")
 
 	// Diagnostics: Check direct os.Getenv visibility on Railway
+	railwayEnv := os.Getenv("RAILWAY_ENVIRONMENT")
+	if railwayEnv != "" {
+		log.Printf("Debug: Detected Railway Environment: %s", railwayEnv)
+	}
+
 	if os.Getenv("OMISE_SECRET_KEY") != "" {
 		log.Printf("Debug: Direct os.Getenv(OMISE_SECRET_KEY) found: true")
 	} else {
 		log.Printf("Debug: Direct os.Getenv(OMISE_SECRET_KEY) found: false")
+	}
+
+	if os.Getenv("OMISE_PUBLIC_KEY") != "" {
+		log.Printf("Debug: Direct os.Getenv(OMISE_PUBLIC_KEY) found: true")
+	} else {
+		log.Printf("Debug: Direct os.Getenv(OMISE_PUBLIC_KEY) found: false")
 	}
 
 	// Initialize Database with GORM

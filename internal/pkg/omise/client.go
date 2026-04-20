@@ -2,6 +2,7 @@ package omisepkg
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/omise/omise-go"
 	"github.com/omise/omise-go/operations"
@@ -15,10 +16,25 @@ type Client struct {
 func NewClient() (*Client, error) {
 	publicKey := viper.GetString("omise.public_key")
 	secretKey := viper.GetString("omise.secret_key")
+	source := "config file"
+
+	// Fallback to direct os.Getenv if viper is empty
+	if secretKey == "" {
+		publicKey = os.Getenv("OMISE_PUBLIC_KEY")
+		secretKey = os.Getenv("OMISE_SECRET_KEY")
+		source = "environment variables"
+	}
 
 	if secretKey == "" {
 		return nil, fmt.Errorf("omise.secret_key is empty (checked config file and environment variable OMISE_SECRET_KEY)")
 	}
+
+	// Internal Log for diagnostics
+	masked := "********"
+	if len(secretKey) > 4 {
+		masked = "..." + secretKey[len(secretKey)-4:]
+	}
+	fmt.Printf("Info: Omise keys loaded from %s (secret ending in %s)\n", source, masked)
 
 	client, err := omise.NewClient(publicKey, secretKey)
 	if err != nil {
