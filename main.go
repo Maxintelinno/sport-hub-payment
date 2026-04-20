@@ -6,7 +6,7 @@ import (
 	"sport-hub-payment/internal/database"
 	"sport-hub-payment/internal/handler"
 	"sport-hub-payment/internal/pkg/kbank"
-	"sport-hub-payment/internal/pkg/omise"
+	omisepkg "sport-hub-payment/internal/pkg/omise"
 	"sport-hub-payment/internal/repository"
 	"sport-hub-payment/internal/service"
 
@@ -32,7 +32,7 @@ func main() {
 	kbankClient := kbank.NewClient()
 
 	// Initialize Omise Client
-	omiseClient, err := omise.NewClient()
+	omiseClient, err := omisepkg.NewClient()
 	if err != nil {
 		log.Printf("Warning: Omise client initialization failed: %v", err)
 	}

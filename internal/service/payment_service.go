@@ -7,7 +7,7 @@ import (
 	"os"
 	"sport-hub-payment/internal/model"
 	"sport-hub-payment/internal/pkg/kbank"
-	"sport-hub-payment/internal/pkg/omise"
+	omisepkg "sport-hub-payment/internal/pkg/omise"
 	"sport-hub-payment/internal/repository"
 	"strconv"
 	"time"
@@ -21,11 +21,11 @@ type PaymentService interface {
 
 type paymentService struct {
 	kbankClient *kbank.Client
-	omiseClient *omise.Client
+	omiseClient *omisepkg.Client
 	repo        repository.PaymentRepository
 }
 
-func NewPaymentService(kbankClient *kbank.Client, omiseClient *omise.Client, repo repository.PaymentRepository) PaymentService {
+func NewPaymentService(kbankClient *kbank.Client, omiseClient *omisepkg.Client, repo repository.PaymentRepository) PaymentService {
 	return &paymentService{
 		kbankClient: kbankClient,
 		omiseClient: omiseClient,
@@ -48,7 +48,12 @@ func (s *paymentService) CreateOmisePromptPayQR(requestUserID, bookingID, amount
 		return nil, fmt.Errorf("unauthorized: user %s does not own booking %s", requestUserID, bookingID)
 	}
 
-	// 2. Generate Omise Charge (cents for amount)
+	// 2. Validate Omise Client
+	if s.omiseClient == nil {
+		return nil, fmt.Errorf("omise client is not initialized (check OMISE_SECRET_KEY)")
+	}
+
+	// 3. Generate Omise Charge (cents for amount)
 	amountF, _ := strconv.ParseFloat(amount, 64)
 	amountCents := int64(amountF * 100)
 

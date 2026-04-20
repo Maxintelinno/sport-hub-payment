@@ -1,4 +1,4 @@
-package omise
+package omisepkg
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func NewClient() (*Client, error) {
 	secretKey := os.Getenv("OMISE_SECRET_KEY")
 
 	if secretKey == "" {
-		return nil, fmt.Errorf("omise.secretKey is required")
+		return nil, fmt.Errorf("OMISE_SECRET_KEY is required")
 	}
 
 	client, err := omise.NewClient(publicKey, secretKey)
@@ -29,11 +29,15 @@ func NewClient() (*Client, error) {
 }
 
 func (c *Client) CreatePromptPayCharge(amount int64, bookingID string) (*omise.Charge, error) {
+	if c == nil || c.BaseClient == nil {
+		return nil, fmt.Errorf("omisepkg client is not initialized")
+	}
+
 	// 1. Create Source
 	source := &omise.Source{}
 	createSource := &operations.CreateSource{
 		Amount:   amount,
-		Currency: "THB",
+		Currency: "thb",
 		Type:     "promptpay",
 	}
 	if err := c.BaseClient.Do(source, createSource); err != nil {
@@ -44,7 +48,7 @@ func (c *Client) CreatePromptPayCharge(amount int64, bookingID string) (*omise.C
 	charge := &omise.Charge{}
 	createCharge := &operations.CreateCharge{
 		Amount:   amount,
-		Currency: "THB",
+		Currency: "thb",
 		Source:   source.ID,
 		Metadata: map[string]interface{}{
 			"booking_id": bookingID,
