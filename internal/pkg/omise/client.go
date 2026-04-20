@@ -3,6 +3,7 @@ package omisepkg
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/omise/omise-go"
 	"github.com/omise/omise-go/operations"
@@ -14,15 +15,16 @@ type Client struct {
 }
 
 func NewClient() (*Client, error) {
-	publicKey := viper.GetString("omise.public_key")
-	secretKey := viper.GetString("omise.secret_key")
-	source := "config file"
+	// Prioritize direct Environment Variables first
+	publicKey := strings.TrimSpace(os.Getenv("OMISE_PUBLIC_KEY"))
+	secretKey := strings.TrimSpace(os.Getenv("OMISE_SECRET_KEY"))
+	source := "environment variables"
 
-	// Fallback to direct os.Getenv if viper is empty
+	// Fallback to viper if env is empty
 	if secretKey == "" {
-		publicKey = os.Getenv("OMISE_PUBLIC_KEY")
-		secretKey = os.Getenv("OMISE_SECRET_KEY")
-		source = "environment variables"
+		publicKey = strings.TrimSpace(viper.GetString("omise.public_key"))
+		secretKey = strings.TrimSpace(viper.GetString("omise.secret_key"))
+		source = "config file"
 	}
 
 	if secretKey == "" {
@@ -35,6 +37,9 @@ func NewClient() (*Client, error) {
 		masked = "..." + secretKey[len(secretKey)-4:]
 	}
 	fmt.Printf("Info: Omise keys loaded from %s (secret ending in %s)\n", source, masked)
+	fmt.Printf("Debug: Key validation - Starts with pkey_: %v, Starts with skey_: %v\n",
+		strings.HasPrefix(publicKey, "pkey_"),
+		strings.HasPrefix(secretKey, "skey_"))
 
 	client, err := omise.NewClient(publicKey, secretKey)
 	if err != nil {
