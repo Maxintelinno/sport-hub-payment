@@ -82,6 +82,52 @@ func (h *PaymentHandler) HandleKBankWebhook(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"status": "success"})
 }
 
+func (h *PaymentHandler) CreateOmisePayment(c echo.Context) error {
+	req := new(model.OmisePaymentRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid request body",
+		})
+	}
+
+	if req.Amount == "" || req.BookingID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "amount and booking_id are required",
+		})
+	}
+
+	// Extract userID from context (set by middleware)
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+	}
+
+	resp, err := h.paymentService.CreateOmisePromptPayQR(userID, req.BookingID, req.Amount)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *PaymentHandler) OmiseWebhook(c echo.Context) error {
+	// 1. Read Raw Body
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "failed to read body"})
+	}
+
+	// 2. Process Webhook
+	if err := h.webhookService.HandleOmiseWebhook(body); err != nil {
+		// Log internal error but return 200 to Omise to avoid retries if we can't handle it
+		return c.JSON(http.StatusOK, map[string]string{"status": "received_with_error", "details": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "success"})
+}
+
 func (h *PaymentHandler) GetPaymentStatus(c echo.Context) error {
 	paymentID := c.Param("id")
 	userID := c.Get("user_id").(string)

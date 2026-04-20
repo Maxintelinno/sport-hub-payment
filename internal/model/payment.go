@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 type GenerateQRRequest struct {
 	BookingID  string `json:"booking_id"`
 	Amount     string `json:"amount"`
@@ -22,4 +24,16 @@ type KBankWebhookRequest struct {
 	Amount          string `json:"amount"`
 	Currency        string `json:"currency"`
 	PaymentDateTime string `json:"paymentDateTime"`
+}
+
+type OmisePaymentRequest struct {
+	BookingID string `json:"booking_id"`
+	Amount    string `json:"amount"`
+}
+
+type OmiseWebhookRequest struct {
+	Object string          `json:"object"`
+	ID     string          `json:"id"`
+	Key    string          `json:"key"` // Event type (e.g., charge.complete)
+	Data   json.RawMessage `json:"data"`
 }

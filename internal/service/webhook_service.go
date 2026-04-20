@@ -9,6 +9,7 @@ import (
 
 type WebhookService interface {
 	HandleKBankWebhook(headers map[string]string, body []byte) error
+	HandleOmiseWebhook(body []byte) error
 }
 
 type webhookService struct {
@@ -78,6 +79,65 @@ func (s *webhookService) HandleKBankWebhook(headers map[string]string, body []by
 		}
 	} else {
 		return fmt.Errorf("ignored status: %s (only SUCCESS is processed)", req.Status)
+	}
+
+	return nil
+}
+
+func (s *webhookService) HandleOmiseWebhook(body []byte) error {
+	// 1. Parse Event
+	var event model.OmiseWebhookRequest
+	if err := json.Unmarshal(body, &event); err != nil {
+		return fmt.Errorf("failed to unmarshal omise webhook: %w", err)
+	}
+
+	// 2. Prepare Log
+	webhookLog := &repository.PaymentWebhookLog{
+		Provider:      "omise",
+		EventType:     event.Key,
+		EventID:       event.ID,
+		RequestBody:   body,
+		ProcessStatus: "received",
+	}
+
+	if err := s.repo.SaveWebhookLog(webhookLog); err != nil {
+		return fmt.Errorf("failed to save webhook log: %w", err)
+	}
+
+	// 3. Process Charge Event
+	if event.Key == "charge.complete" {
+		var charge struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		}
+		if err := json.Unmarshal(event.Data, &charge); err != nil {
+			return s.markLogFailed(webhookLog.ID, fmt.Sprintf("failed to parse charge data: %v", err))
+		}
+
+		// Look up payment
+		payment, err := s.repo.GetPaymentByProviderPaymentID("omise", charge.ID)
+		if err != nil {
+			return s.markLogFailed(webhookLog.ID, fmt.Sprintf("payment not found for charge %s: %v", charge.ID, err))
+		}
+
+		if charge.Status == "successful" {
+			paymentEvent := &repository.PaymentEvent{
+				Provider:    "omise",
+				EventID:     event.ID,
+				PaymentID:   &payment.ID,
+				BookingID:   &payment.BookingID,
+				EventType:   event.Key,
+				EventStatus: charge.Status,
+				Payload:     body,
+			}
+
+			if err := s.repo.ProcessOmiseSuccess(payment, paymentEvent, webhookLog.ID); err != nil {
+				return s.markLogFailed(webhookLog.ID, fmt.Sprintf("failed to process success event: %v", err))
+			}
+		} else {
+			// Handle failed charge if needed
+			return s.markLogFailed(webhookLog.ID, fmt.Sprintf("charge status ignored: %s", charge.Status))
+		}
 	}
 
 	return nil

@@ -73,9 +73,11 @@ type PaymentRepository interface {
 	IsEventProcessed(provider, eventID string) (bool, error)
 	GetPaymentByProviderRef(provider, ref string) (*Payment, error)
 	ProcessKBankQRSuccess(payment *Payment, event *PaymentEvent, webhookLogID string) error
+	ProcessOmiseSuccess(payment *Payment, event *PaymentEvent, webhookLogID string) error
 
-	// Polling
+	// Polling & Lookup
 	GetPaymentByID(id string) (*Payment, error)
+	GetPaymentByProviderPaymentID(provider, paymentID string) (*Payment, error)
 	VerifyPaymentOwner(paymentID, userID string) (bool, error)
 }
 
@@ -190,6 +192,52 @@ func (r *gormPaymentRepository) ProcessKBankQRSuccess(payment *Payment, event *P
 	})
 }
 
+func (r *gormPaymentRepository) ProcessOmiseSuccess(payment *Payment, event *PaymentEvent, webhookLogID string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Create Payment Event
+		if err := tx.Create(event).Error; err != nil {
+			return err
+		}
+
+		// 2. Update Payment
+		now := time.Now()
+		payment.Status = "paid"
+		payment.PaidAt = &now
+
+		if err := tx.Save(payment).Error; err != nil {
+			return err
+		}
+
+		// 3. Update Booking
+		result := tx.Table("bookings").Where("id = ?", payment.BookingID).Updates(map[string]interface{}{
+			"status":         "confirmed",
+			"payment_status": "paid",
+			"updated_at":     now,
+		})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		// 4. Update Webhook Log Status
+		if err := tx.Model(&PaymentWebhookLog{}).Where("id = ?", webhookLogID).Updates(map[string]interface{}{
+			"processed_at":   now,
+			"process_status": "processed",
+		}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (r *gormPaymentRepository) GetPaymentByProviderPaymentID(provider, paymentID string) (*Payment, error) {
+	var payment Payment
+	err := r.db.Where("provider = ? AND provider_payment_id = ?", provider, paymentID).First(&payment).Error
+	if err != nil {
+		return nil, err
+	}
+	return &payment, nil
+}
 func (r *gormPaymentRepository) GetPaymentByID(id string) (*Payment, error) {
 	var payment Payment
 	err := r.db.Where("id = ?", id).First(&payment).Error

@@ -12,6 +12,7 @@ func SetupRoutes(e *echo.Echo, ph *PaymentHandler) {
 	
 	// Public Webhook (No Auth)
 	v1.POST("/payments/webhooks/kbank", ph.HandleKBankWebhook)
+	v1.POST("/webhook/omise", ph.OmiseWebhook)
 
 	// Protected routes
 	v1Auth := v1.Group("")
@@ -21,6 +22,7 @@ func SetupRoutes(e *echo.Echo, ph *PaymentHandler) {
 	payment := v1Auth.Group("/payment")
 	{
 		payment.POST("/qr/generate", ph.GenerateThaiQR)
+		payment.POST("/create-payment", ph.CreateOmisePayment)
 
 		// [DIAGNOSTIC] Check if the path is reachable via GET
 		payment.GET("/qr/generate", func(c echo.Context) error {

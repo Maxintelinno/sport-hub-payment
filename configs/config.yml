@@ -10,3 +10,7 @@ kbankPayment:
   merchantId: "KB102057149704"
   terminalId: "term1"
   baseUrl: "https://openapi-sandbox.kasikornbank.com"
+
+omise:
+  publicKey: "pkey_test_..."
+  secretKey: "skey_test_..."

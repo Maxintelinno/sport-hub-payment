@@ -7,6 +7,7 @@ import (
 	"os"
 	"sport-hub-payment/internal/model"
 	"sport-hub-payment/internal/pkg/kbank"
+	"sport-hub-payment/internal/pkg/omise"
 	"sport-hub-payment/internal/repository"
 	"strconv"
 	"time"
@@ -14,19 +15,86 @@ import (
 
 type PaymentService interface {
 	GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*model.QRResponse, error)
+	CreateOmisePromptPayQR(requestUserID, bookingID, amount string) (*model.QRResponse, error)
 	GetPaymentStatus(paymentID, userID string) (*repository.Payment, error)
 }
 
 type paymentService struct {
 	kbankClient *kbank.Client
+	omiseClient *omise.Client
 	repo        repository.PaymentRepository
 }
 
-func NewPaymentService(client *kbank.Client, repo repository.PaymentRepository) PaymentService {
+func NewPaymentService(kbankClient *kbank.Client, omiseClient *omise.Client, repo repository.PaymentRepository) PaymentService {
 	return &paymentService{
-		kbankClient: client,
+		kbankClient: kbankClient,
+		omiseClient: omiseClient,
 		repo:        repo,
 	}
+}
+
+func (s *paymentService) CreateOmisePromptPayQR(requestUserID, bookingID, amount string) (*model.QRResponse, error) {
+	// 1. Validate Ownership: Check if the requestUserID matches the booking owner
+	bookingOwner, err := s.repo.GetBookingOwner(bookingID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify booking owner: %w", err)
+	}
+
+	if bookingOwner == "" {
+		return nil, fmt.Errorf("booking not found: %s", bookingID)
+	}
+
+	if bookingOwner != requestUserID {
+		return nil, fmt.Errorf("unauthorized: user %s does not own booking %s", requestUserID, bookingID)
+	}
+
+	// 2. Generate Omise Charge (cents for amount)
+	amountF, _ := strconv.ParseFloat(amount, 64)
+	amountCents := int64(amountF * 100)
+
+	charge, err := s.omiseClient.CreatePromptPayCharge(amountCents, bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Prepare payment record for GORM
+	paymentNo := fmt.Sprintf("PAY-OMISE-%d", time.Now().UnixNano()/1e6)
+
+	// QR Data is in Source.ScannableCode.Image.DownloadURI or data
+	var qrPayload string
+	if charge.Source != nil && charge.Source.ScannableCode != nil {
+		qrPayload = charge.Source.ScannableCode.Image.DownloadURI
+	}
+
+	metadataJSON, _ := json.Marshal(map[string]interface{}{
+		"omise_charge_id": charge.ID,
+		"omise_source_id": charge.Source.ID,
+	})
+
+	payment := &repository.Payment{
+		BookingID:         bookingID,
+		PaymentNo:         paymentNo,
+		Provider:          "omise",
+		Method:            "promptpay",
+		Amount:            amountF,
+		Currency:          "THB",
+		Status:            "pending",
+		ProviderPaymentID: &charge.ID,
+		QRPayload:         &qrPayload,
+		ExpiresAt:         time.Now().Add(10 * time.Minute),
+		Metadata:          metadataJSON,
+	}
+
+	// 4. Save to database
+	if err := s.repo.SavePaymentAndUpdateBooking(payment); err != nil {
+		return nil, fmt.Errorf("failed to save payment and update booking: %w", err)
+	}
+
+	return &model.QRResponse{
+		PaymentID: payment.ID,
+		QrCode:    qrPayload,
+		Status:    "pending",
+	}, nil
 }
 
 func (s *paymentService) GenerateThaiQR(requestUserID, bookingID, amount, ref1, ref2 string) (*model.QRResponse, error) {

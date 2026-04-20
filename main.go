@@ -6,6 +6,7 @@ import (
 	"sport-hub-payment/internal/database"
 	"sport-hub-payment/internal/handler"
 	"sport-hub-payment/internal/pkg/kbank"
+	"sport-hub-payment/internal/pkg/omise"
 	"sport-hub-payment/internal/repository"
 	"sport-hub-payment/internal/service"
 
@@ -30,9 +31,15 @@ func main() {
 	// Initialize KBank Client with configuration from viper
 	kbankClient := kbank.NewClient()
 
+	// Initialize Omise Client
+	omiseClient, err := omise.NewClient()
+	if err != nil {
+		log.Printf("Warning: Omise client initialization failed: %v", err)
+	}
+
 	// Initialize Repository, Service and Handler
 	paymentRepo := repository.NewPaymentRepository(db)
-	paymentService := service.NewPaymentService(kbankClient, paymentRepo)
+	paymentService := service.NewPaymentService(kbankClient, omiseClient, paymentRepo)
 	webhookService := service.NewWebhookService(paymentRepo)
 	paymentHandler := handler.NewPaymentHandler(paymentService, webhookService)
 
