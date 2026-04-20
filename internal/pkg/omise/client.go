@@ -13,11 +13,11 @@ type Client struct {
 }
 
 func NewClient() (*Client, error) {
-	publicKey := viper.GetString("omise.publicKey")
-	secretKey := viper.GetString("omise.secretKey")
+	publicKey := viper.GetString("omise.public_key")
+	secretKey := viper.GetString("omise.secret_key")
 
 	if secretKey == "" {
-		return nil, fmt.Errorf("omise.secretKey is required")
+		return nil, fmt.Errorf("omise.secret_key is required")
 	}
 
 	client, err := omise.NewClient(publicKey, secretKey)

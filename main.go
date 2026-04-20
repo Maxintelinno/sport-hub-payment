@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Printf("Warning: Omise client initialization failed: %v", err)
 	} else {
-		sKey := viper.GetString("omise.secretKey")
+		sKey := viper.GetString("omise.secret_key")
 		if sKey != "" {
 			masked := "********"
 			if len(sKey) > 4 {

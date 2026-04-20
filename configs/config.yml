@@ -12,5 +12,5 @@ kbankPayment:
   baseUrl: "https://openapi-sandbox.kasikornbank.com"
 
 omise:
-  publicKey: "pkey_test_..."
-  secretKey: "skey_test_..."
+  public_key: "pkey_test_..."
+  secret_key: "skey_test_..."
